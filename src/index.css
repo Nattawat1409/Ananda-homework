@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white font-sans text-ananda-ink antialiased;
+  }
+}
+
+@layer components {
+  /* Range slider thumbs need vendor pseudo-elements that utilities can't reach. */
+  .range-thumb {
+    @apply pointer-events-none absolute h-1 w-full appearance-none bg-transparent;
+  }
+
+  .range-thumb::-webkit-slider-thumb {
+    @apply pointer-events-auto h-4 w-4 cursor-pointer appearance-none rounded-full border-2 border-white bg-ananda-blue shadow;
+  }
+
+  .range-thumb::-moz-range-thumb {
+    @apply pointer-events-auto h-4 w-4 cursor-pointer appearance-none rounded-full border-2 border-white bg-ananda-blue shadow;
+  }
+}
