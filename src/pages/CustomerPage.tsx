@@ -8,6 +8,7 @@ import UnitCard from '../components/customer/UnitCard'
 import UnitDetailModal from '../components/customer/UnitDetailModal'
 import CompareTray, { MAX_COMPARE } from '../components/customer/CompareTray'
 import CompareModal from '../components/customer/CompareModal'
+import TypewriterText from '../components/shared/TypewriterText'
 
 export default function CustomerPage() {
   const { units } = useUnits()
@@ -68,7 +69,9 @@ export default function CustomerPage() {
   return (
     <>
       <section className="bg-ananda-dark py-12 text-white lg:py-16">
-        <h1 className="mb-8 text-center text-3xl font-bold lg:text-4xl">ค้นหาที่อยู่อาศัย</h1>
+        <h1 className="mb-8 text-center text-3xl font-bold lg:text-4xl">
+          <TypewriterText text="ค้นหาที่อยู่อาศัย" />
+        </h1>
         <FilterBar
           filters={filters}
           locations={locations}

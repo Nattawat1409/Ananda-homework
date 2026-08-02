@@ -1,4 +1,4 @@
-import { AlertTriangle, Pencil } from 'lucide-react'
+import { AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import type { Unit, UnitStatus } from '../../types'
 import { formatBaht } from '../../lib/format'
 import { validateUnit } from '../../lib/validation'
@@ -11,9 +11,10 @@ interface UnitTableProps {
   units: Unit[]
   onStatusChange: (id: string, status: UnitStatus) => void
   onEdit: (unit: Unit) => void
+  onDelete: (unit: Unit) => void
 }
 
-export default function UnitTable({ units, onStatusChange, onEdit }: UnitTableProps) {
+export default function UnitTable({ units, onStatusChange, onEdit, onDelete }: UnitTableProps) {
   return (
     <>
       {/* Desktop */}
@@ -77,9 +78,14 @@ export default function UnitTable({ units, onStatusChange, onEdit }: UnitTablePr
                   </td>
                   <td className="p-3 text-xs text-ananda-muted">{unit.updatedAt}</td>
                   <td className="p-3">
-                    <Button variant="secondary" size="sm" onClick={() => onEdit(unit)}>
-                      <Pencil size={13} /> แก้ไข
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => onEdit(unit)}>
+                        <Pencil size={13} /> แก้ไข
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => onDelete(unit)}>
+                        <Trash2 size={13} /> ลบ
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               )
@@ -128,13 +134,16 @@ export default function UnitTable({ units, onStatusChange, onEdit }: UnitTablePr
                 </p>
               )}
 
-              <div className="mt-4 flex items-center gap-2">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <StatusSelect
                   value={unit.status}
                   onChange={(status) => onStatusChange(unit.id, status)}
                 />
                 <Button variant="secondary" size="sm" onClick={() => onEdit(unit)}>
                   <Pencil size={13} /> แก้ไข
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(unit)}>
+                  <Trash2 size={13} /> ลบ
                 </Button>
               </div>
             </article>

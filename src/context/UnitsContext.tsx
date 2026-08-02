@@ -8,6 +8,7 @@ interface UnitsContextValue {
   setStatus: (id: string, status: UnitStatus) => void
   updateUnit: (unit: Unit) => void
   addUnit: (unit: Unit) => void
+  deleteUnit: (id: string) => void
 }
 
 const UnitsContext = createContext<UnitsContextValue | null>(null)
@@ -29,9 +30,13 @@ export function UnitsProvider({ children }: { children: ReactNode }) {
     setUnits((current) => [...current, unit])
   }, [])
 
+  const deleteUnit = useCallback((id: string) => {
+    setUnits((current) => current.filter((unit) => unit.id !== id))
+  }, [])
+
   const value = useMemo(
-    () => ({ units, setStatus, updateUnit, addUnit }),
-    [units, setStatus, updateUnit, addUnit],
+    () => ({ units, setStatus, updateUnit, addUnit, deleteUnit }),
+    [units, setStatus, updateUnit, addUnit, deleteUnit],
   )
 
   return <UnitsContext.Provider value={value}>{children}</UnitsContext.Provider>

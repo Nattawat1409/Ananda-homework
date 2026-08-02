@@ -47,7 +47,7 @@ const createBlankUnit = (): Unit => ({
 })
 
 export default function AdminPage() {
-  const { units, setStatus, updateUnit, addUnit } = useUnits()
+  const { units, setStatus, updateUnit, addUnit, deleteUnit } = useUnits()
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<UnitStatus | 'ทั้งหมด'>('ทั้งหมด')
   const [editing, setEditing] = useState<Unit | null>(null)
@@ -61,6 +61,15 @@ export default function AdminPage() {
   const handleEditExisting = (unit: Unit) => {
     setIsCreating(false)
     setEditing(unit)
+  }
+
+  const handleDelete = (unit: Unit) => {
+    const confirmed = window.confirm(
+      `ต้องการลบยูนิต ${unit.unitCode} (${unit.project}) ใช่หรือไม่?\nการลบนี้ไม่สามารถย้อนกลับได้`,
+    )
+    if (!confirmed) return
+    deleteUnit(unit.id)
+    if (editing?.id === unit.id) setEditing(null)
   }
 
   const visibleUnits = useMemo(() => {
@@ -127,7 +136,12 @@ export default function AdminPage() {
             ไม่พบยูนิตที่ตรงกับเงื่อนไข
           </div>
         ) : (
-          <UnitTable units={visibleUnits} onStatusChange={setStatus} onEdit={handleEditExisting} />
+          <UnitTable
+            units={visibleUnits}
+            onStatusChange={setStatus}
+            onEdit={handleEditExisting}
+            onDelete={handleDelete}
+          />
         )}
       </div>
 
