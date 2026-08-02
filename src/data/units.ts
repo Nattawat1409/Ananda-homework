@@ -189,3 +189,4 @@ export const units: Unit[] = [
     imageSizesKB: [340, 320, 199, 176, 186, 158, 78, 79],
   },
 ]
+

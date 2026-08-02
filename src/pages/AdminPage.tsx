@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
 import type { Unit, UnitStatus } from '../types'
 import { useUnits } from '../context/UnitsContext'
 import { validateUnit } from '../lib/validation'
+import { formatThaiShortDate } from '../lib/format'
 import HealthCheckPanel from '../components/admin/HealthCheckPanel'
 import UnitTable from '../components/admin/UnitTable'
 import UnitFormModal from '../components/admin/UnitFormModal'
+import Button from '../components/shared/Button'
 
 const STATUS_FILTERS: (UnitStatus | 'ทั้งหมด')[] = [
   'ทั้งหมด',
@@ -14,11 +17,51 @@ const STATUS_FILTERS: (UnitStatus | 'ทั้งหมด')[] = [
   'ขายแล้ว',
 ]
 
+const createBlankUnit = (): Unit => ({
+  id: `u-${Date.now()}`,
+  unitCode: '',
+  plot: '',
+  project: '',
+  brand: '',
+  houseModel: '',
+  propertyType: 'บ้านเดี่ยว',
+  location: '',
+  areaSqWa: 0,
+  areaSqM: 0,
+  bedrooms: 0,
+  bathrooms: 0,
+  parking: 0,
+  direction: 'เหนือ',
+  listPrice: 0,
+  promoPrice: null,
+  status: 'ว่าง',
+  updatedAt: formatThaiShortDate(new Date()),
+  petFriendly: false,
+  nearInternationalSchool: false,
+  nearBTS: false,
+  images: [],
+  altTexts: [],
+  seoTitle: '',
+  seoDescription: '',
+  imageSizesKB: [],
+})
+
 export default function AdminPage() {
-  const { units, setStatus, updateUnit } = useUnits()
+  const { units, setStatus, updateUnit, addUnit } = useUnits()
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<UnitStatus | 'ทั้งหมด'>('ทั้งหมด')
   const [editing, setEditing] = useState<Unit | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+
+  const handleAddNew = () => {
+    setIsCreating(true)
+    setEditing(createBlankUnit())
+  }
+
+  const handleEditExisting = (unit: Unit) => {
+    setIsCreating(false)
+    setEditing(unit)
+  }
 
   const visibleUnits = useMemo(() => {
     const needle = query.trim().toLowerCase()
@@ -50,7 +93,10 @@ export default function AdminPage() {
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-bold">รายการยูนิต</h2>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button size="sm" onClick={handleAddNew}>
+            <Plus size={14} /> เพิ่มยูนิตใหม่
+          </Button>
           <input
             type="search"
             value={query}
@@ -81,16 +127,23 @@ export default function AdminPage() {
             ไม่พบยูนิตที่ตรงกับเงื่อนไข
           </div>
         ) : (
-          <UnitTable units={visibleUnits} onStatusChange={setStatus} onEdit={setEditing} />
+          <UnitTable units={visibleUnits} onStatusChange={setStatus} onEdit={handleEditExisting} />
         )}
       </div>
 
       <UnitFormModal
         unit={editing}
-        onClose={() => setEditing(null)}
-        onSave={(unit) => {
-          updateUnit(unit)
+        mode={isCreating ? 'create' : 'edit'}
+        onClose={() => {
           setEditing(null)
+          setIsCreating(false)
+        }}
+        onSave={(unit) => {
+          const saved = { ...unit, updatedAt: formatThaiShortDate(new Date()) }
+          if (isCreating) addUnit(saved)
+          else updateUnit(saved)
+          setEditing(null)
+          setIsCreating(false)
         }}
       />
     </main>

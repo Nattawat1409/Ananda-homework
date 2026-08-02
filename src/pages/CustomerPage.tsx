@@ -86,7 +86,7 @@ export default function CustomerPage() {
 
         {visibleUnits.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-ananda-border py-20 text-center">
-            <p className="font-semibold">ไม่พบยูนิตที่ตรงกับเงื่อนไข</p>
+            <p className="font-semibold">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</p>
             <p className="mt-1 text-sm text-ananda-muted">ลองปรับช่วงราคาหรือล้างตัวกรองดู</p>
           </div>
         ) : (

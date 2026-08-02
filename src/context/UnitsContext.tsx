@@ -7,6 +7,7 @@ interface UnitsContextValue {
   units: Unit[]
   setStatus: (id: string, status: UnitStatus) => void
   updateUnit: (unit: Unit) => void
+  addUnit: (unit: Unit) => void
 }
 
 const UnitsContext = createContext<UnitsContextValue | null>(null)
@@ -24,7 +25,14 @@ export function UnitsProvider({ children }: { children: ReactNode }) {
     setUnits((current) => current.map((unit) => (unit.id === updated.id ? updated : unit)))
   }, [])
 
-  const value = useMemo(() => ({ units, setStatus, updateUnit }), [units, setStatus, updateUnit])
+  const addUnit = useCallback((unit: Unit) => {
+    setUnits((current) => [...current, unit])
+  }, [])
+
+  const value = useMemo(
+    () => ({ units, setStatus, updateUnit, addUnit }),
+    [units, setStatus, updateUnit, addUnit],
+  )
 
   return <UnitsContext.Provider value={value}>{children}</UnitsContext.Provider>
 }

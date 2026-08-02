@@ -8,6 +8,22 @@ export const IMAGE_SIZE_MAX_KB = 300
 export function validateUnit(unit: Unit): ValidationIssue[] {
   const issues: ValidationIssue[] = []
 
+  if (!unit.unitCode.trim()) {
+    issues.push({ id: 'unit-code-empty', level: 'error', message: 'ยังไม่ได้กรอกรหัสยูนิต' })
+  }
+
+  if (!unit.project.trim()) {
+    issues.push({ id: 'project-empty', level: 'error', message: 'ยังไม่ได้กรอกชื่อโครงการ' })
+  }
+
+  if (unit.images.length === 0) {
+    issues.push({
+      id: 'no-images',
+      level: 'error',
+      message: 'ยูนิตนี้ยังไม่มีรูปภาพเลย ต้องอัปโหลดอย่างน้อย 1 รูปก่อนเผยแพร่',
+    })
+  }
+
   const oversized = unit.imageSizesKB
     .map((size, index) => ({ size, index }))
     .filter(({ size }) => size > IMAGE_SIZE_MAX_KB)

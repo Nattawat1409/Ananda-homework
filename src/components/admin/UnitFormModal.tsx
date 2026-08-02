@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Trash2, UploadCloud, XCircle } from 'lucide-react'
 import type { Direction, Unit, UnitStatus } from '../../types'
-import { canPublish, validateUnit } from '../../lib/validation'
+import { IMAGE_SIZE_MAX_KB, canPublish, validateUnit } from '../../lib/validation'
 import Button from '../shared/Button'
 import Modal from '../shared/Modal'
 import SEOHelper from './SEOHelper'
@@ -11,11 +11,17 @@ const DIRECTIONS: Direction[] = ['เหนือ', 'ใต้', 'ตะวั�
 
 interface UnitFormModalProps {
   unit: Unit | null
+  mode?: 'create' | 'edit'
   onClose: () => void
   onSave: (unit: Unit) => void
 }
 
-export default function UnitFormModal({ unit, onClose, onSave }: UnitFormModalProps) {
+export default function UnitFormModal({
+  unit,
+  mode = 'edit',
+  onClose,
+  onSave,
+}: UnitFormModalProps) {
   const [draft, setDraft] = useState<Unit | null>(unit)
 
   useEffect(() => setDraft(unit), [unit])
@@ -25,11 +31,44 @@ export default function UnitFormModal({ unit, onClose, onSave }: UnitFormModalPr
   const patch = (partial: Partial<Unit>) =>
     setDraft((current) => (current ? { ...current, ...partial } : current))
 
+  const addImages = (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    const picked = Array.from(files).map((file) => ({
+      url: URL.createObjectURL(file),
+      sizeKB: Math.max(1, Math.round(file.size / 1024)),
+    }))
+    setDraft((current) => {
+      if (!current) return current
+      return {
+        ...current,
+        images: [...current.images, ...picked.map((p) => p.url)],
+        altTexts: [...current.altTexts, ...picked.map(() => '')],
+        imageSizesKB: [...current.imageSizesKB, ...picked.map((p) => p.sizeKB)],
+      }
+    })
+  }
+
+  const removeImage = (index: number) => {
+    setDraft((current) => {
+      if (!current || current.images.length <= 1) return current
+      const removedUrl = current.images[index]
+      if (removedUrl?.startsWith('blob:')) URL.revokeObjectURL(removedUrl)
+      return {
+        ...current,
+        images: current.images.filter((_, i) => i !== index),
+        altTexts: current.altTexts.filter((_, i) => i !== index),
+        imageSizesKB: current.imageSizesKB.filter((_, i) => i !== index),
+      }
+    })
+  }
+
   const issues = validateUnit(draft)
   const publishable = canPublish(issues)
+  const title =
+    mode === 'create' ? 'เพิ่มยูนิตใหม่' : `แก้ไขยูนิต ${draft.unitCode || '(ยังไม่มีรหัส)'}`
 
   return (
-    <Modal open title={`แก้ไขยูนิต ${draft.unitCode}`} onClose={onClose} maxWidth="max-w-4xl">
+    <Modal open title={title} onClose={onClose} maxWidth="max-w-4xl">
       <div className="grid gap-5 p-5 lg:grid-cols-[1.2fr_1fr]">
         <div className="space-y-5">
           <section className="rounded-xl border border-ananda-border p-4">
@@ -124,10 +163,39 @@ export default function UnitFormModal({ unit, onClose, onSave }: UnitFormModalPr
           </section>
 
           <section className="rounded-xl border border-ananda-border p-4">
-            <h3 className="mb-3 text-sm font-bold">Alt Text ของรูปภาพ ({draft.images.length} รูป)</h3>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold">รูปภาพ ({draft.images.length} รูป)</h3>
+              <label className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-ananda-blue px-3 py-1.5 text-xs font-semibold text-ananda-blue transition-colors hover:bg-blue-50">
+                <UploadCloud size={14} />
+                อัปโหลดรูปใหม่
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    addImages(event.target.files)
+                    event.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
+
+            <p className="mb-3 text-[11px] text-ananda-muted">
+              ระบบจะเตือนอัตโนมัติถ้าไฟล์ที่อัปโหลดมีขนาดเกิน {IMAGE_SIZE_MAX_KB}KB
+            </p>
+
+            {draft.images.length === 0 && (
+              <p className="rounded-lg border border-dashed border-ananda-border py-6 text-center text-xs text-ananda-muted">
+                ยังไม่มีรูปภาพ — อัปโหลดอย่างน้อย 1 รูปก่อนเผยแพร่
+              </p>
+            )}
+
             <div className="space-y-2">
               {draft.images.map((image, index) => {
-                const missing = !draft.altTexts[index]?.trim()
+                const missingAlt = !draft.altTexts[index]?.trim()
+                const sizeKB = draft.imageSizesKB[index]
+                const oversized = sizeKB > IMAGE_SIZE_MAX_KB
                 return (
                   <div key={`${image}-${index}`} className="flex items-center gap-2">
                     <img
@@ -146,14 +214,32 @@ export default function UnitFormModal({ unit, onClose, onSave }: UnitFormModalPr
                         patch({ altTexts })
                       }}
                       className={`w-full rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-1 ${
-                        missing
+                        missingAlt
                           ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
                           : 'border-ananda-border focus:border-ananda-blue focus:ring-ananda-blue'
                       }`}
                     />
-                    <span className="w-16 shrink-0 text-right text-[11px] tabular-nums text-ananda-muted">
-                      {draft.imageSizesKB[index]}KB
+                    <span
+                      className={`w-16 shrink-0 text-right text-[11px] font-semibold tabular-nums ${
+                        oversized ? 'text-red-600' : 'text-ananda-muted'
+                      }`}
+                    >
+                      {sizeKB.toLocaleString('th-TH')}KB
                     </span>
+                    <button
+                      type="button"
+                      aria-label={`ลบรูปที่ ${index + 1}`}
+                      disabled={draft.images.length <= 1}
+                      onClick={() => removeImage(index)}
+                      title={
+                        draft.images.length <= 1
+                          ? 'ต้องมีรูปอย่างน้อย 1 รูป'
+                          : `ลบรูปที่ ${index + 1}`
+                      }
+                      className="shrink-0 rounded-lg p-1.5 text-ananda-muted transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ananda-muted"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 )
               })}
@@ -207,7 +293,11 @@ export default function UnitFormModal({ unit, onClose, onSave }: UnitFormModalPr
                 disabled={!publishable}
                 onClick={() => onSave(draft)}
               >
-                {publishable ? 'บันทึกและเผยแพร่' : 'แก้ไขข้อผิดพลาดก่อน'}
+                {publishable
+                  ? mode === 'create'
+                    ? 'เพิ่มยูนิตและเผยแพร่'
+                    : 'บันทึกและเผยแพร่'
+                  : 'แก้ไขข้อผิดพลาดก่อน'}
               </Button>
               <Button variant="secondary" className="w-full" onClick={onClose}>
                 ยกเลิก
