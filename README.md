@@ -83,4 +83,4 @@ src/
 ทดสอบกฎ validation เท่านั้น
 
 ## Deploy frontend on Vercel
-https://ananda-homework-766ll28i0-nattawat1409s-projects.vercel.app/
+https://ananda-homework.vercel.app/
